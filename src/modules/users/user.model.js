@@ -1,3 +1,4 @@
+const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
@@ -9,7 +10,8 @@ const UserSchema = new mongoose.Schema(
     },
     prenom: {
       type: String,
-      require: [true, "le prenom est obligatoire"],
+      required: [true, "le prenom est obligatoire"],
+      trim: true,
     },
     email: {
       type: String,
@@ -22,6 +24,7 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Le mot de passe est obligatoire"],
+      select: false,
     },
 
     role: {
@@ -30,7 +33,40 @@ const UserSchema = new mongoose.Schema(
       default: "AGENT",
     },
 
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    refreshToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    updatedAt: {
       type: Date,
       default: Date.now,
     },
@@ -39,5 +75,21 @@ const UserSchema = new mongoose.Schema(
     versionKey: false,
   },
 );
+
+UserSchema.pre("save", async function savePassword() {
+  if (!this.isModified("password")) {
+    return;
+  }
+
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+UserSchema.methods.comparePassword = function comparePassword(password) {
+  return bcrypt.compare(password, this.password);
+};
+
+UserSchema.pre("save", function updateTimestamp() {
+  this.updatedAt = new Date();
+});
 
 module.exports = mongoose.model("User", UserSchema);

@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
 const logger = require("../utils/logger");
-const dotenv = require("dotenv");
-dotenv.config();
 const DB = process.env.MONGO_URI;
 
 // connection a la base de donnee mongoDB
