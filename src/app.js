@@ -4,6 +4,7 @@ const swaggerUi = require("swagger-ui-express");
 const logger = require("./common/utils/logger");
 const swaggerSpec = require("./common/docs/swagger");
 const authRoutes = require("./modules/auth/auth.routes");
+const dechetRoutes = require("./modules/dechets/dechet.routes");
 const userRoutes = require("./modules/users/user.routes");
 
 const app = express();
@@ -29,6 +30,7 @@ app.use(
 );
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/dechets", dechetRoutes);
 app.use("/api/v1/users", userRoutes);
 
 app.use((req, res) => {
