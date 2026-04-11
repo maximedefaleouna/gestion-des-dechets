@@ -6,6 +6,8 @@ const swaggerSpec = require("./common/docs/swagger");
 const authRoutes = require("./modules/auth/auth.routes");
 const userRoutes = require("./modules/users/user.routes");
 
+const stationRoutes = require("./modules/stations/station.routes");
+
 const app = express();
 
 app.use(cors());
@@ -30,6 +32,7 @@ app.use(
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/stations", stationRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
