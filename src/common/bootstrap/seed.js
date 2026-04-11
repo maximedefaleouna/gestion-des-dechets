@@ -31,11 +31,10 @@ const seedUsersConfig = {
 
 const seedDechetConfig = {
   nom: "Plastique PET",
-  categorie: "PLASTIQUE",
+  categorie: "Recyclable",
   description: "Dechet plastique de demonstration cree automatiquement.",
   uniteMesure: "kg",
   dangereux: false,
-  recyclable: true,
 };
 
 const seedStationConfig = {
