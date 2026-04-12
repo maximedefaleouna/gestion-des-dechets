@@ -10,7 +10,47 @@ on:
       - dev
       - main
 
+permissions:
+  contents: read
+
 jobs:
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Run linter
+        run: npx --yes eslint@8.57.1 src test --ext .js --ignore-path .gitignore
+
+  audit:
+    name: Production audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --production
+
   test:
     name: Run tests
     runs-on: ubuntu-latest
