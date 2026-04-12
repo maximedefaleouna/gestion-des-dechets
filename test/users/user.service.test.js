@@ -117,6 +117,21 @@ describe("user.service", () => {
         totalPages: 1,
       });
     });
+
+    it("keeps a valid sort field and includes inactive users when requested", async () => {
+      const chain = createFindChain([]);
+      mockUserModel.find.mockReturnValue(chain);
+      mockUserModel.countDocuments.mockResolvedValue(0);
+
+      await userService.getUsers({
+        sortBy: "email",
+        order: "desc",
+        includeInactive: "true",
+      });
+
+      expect(mockUserModel.find).toHaveBeenCalledWith({});
+      expect(chain.sort).toHaveBeenCalledWith({ email: -1 });
+    });
   });
 
   describe("getUserById", () => {
@@ -209,6 +224,36 @@ describe("user.service", () => {
         statusCode: 404,
       });
     });
+
+    it("sanitizes deletedBy and createdBy references", async () => {
+      const user = createUserDoc({
+        _id: "user-7",
+        createdBy: "creator-1",
+        deletedBy: {
+          _id: "deleter-1",
+          nom: "Delete",
+          prenom: "User",
+          email: "deleter@example.com",
+          role: ROLES.ADMIN,
+        },
+      });
+
+      mockUserModel.findById.mockReturnValue(user);
+
+      const result = await userService.getUserById("user-7", {
+        id: "user-7",
+        role: ROLES.AGENT,
+      });
+
+      expect(result.createdBy).toEqual({ id: "creator-1" });
+      expect(result.deletedBy).toEqual({
+        id: "deleter-1",
+        nom: "Delete",
+        prenom: "User",
+        email: "deleter@example.com",
+        role: ROLES.ADMIN,
+      });
+    });
   });
 
   describe("getCurrentUser", () => {
@@ -226,7 +271,7 @@ describe("user.service", () => {
   });
 
   describe("createUser", () => {
-    it("creates a user for an admin", async () => {
+    it("creates a user for an admin with an explicit password", async () => {
       const created = createUserDoc({
         _id: "user-4",
         role: ROLES.ADMIN,
@@ -260,7 +305,46 @@ describe("user.service", () => {
       expect(mockUserModel.create).toHaveBeenCalledWith(
         expect.objectContaining({
           email: "alice@example.com",
+          password: "Secret123!",
           role: ROLES.ADMIN,
+          createdBy: "admin-1",
+        }),
+      );
+    });
+
+    it("defaults the password to 123456 when it is omitted", async () => {
+      const created = createUserDoc({
+        _id: "user-4",
+        role: ROLES.AGENT,
+        email: "alice@example.com",
+        createdBy: {
+          _id: "admin-1",
+          nom: "Admin",
+          prenom: "User",
+          email: "admin@example.com",
+          role: ROLES.ADMIN,
+        },
+      });
+
+      mockUserModel.findOne.mockResolvedValue(null);
+      mockUserModel.create.mockResolvedValue(created);
+      mockUserModel.findById.mockReturnValue(created);
+
+      const result = await userService.createUser(
+        {
+          nom: "Alice",
+          prenom: "Martin",
+          email: "alice@example.com",
+        },
+        { id: "admin-1", role: ROLES.ADMIN },
+      );
+
+      expect(result.email).toBe("alice@example.com");
+      expect(mockUserModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "alice@example.com",
+          password: "123456",
+          role: ROLES.AGENT,
           createdBy: "admin-1",
         }),
       );
@@ -415,6 +499,39 @@ describe("user.service", () => {
 
       expect(result.role).toBe(ROLES.ADMIN);
       expect(result.isActive).toBe(false);
+      expect(current.save).toHaveBeenCalledTimes(1);
+    });
+
+    it("reactivates a user and clears deletion metadata", async () => {
+      const current = createUserDoc({
+        _id: "user-1",
+        role: ROLES.ADMIN,
+        isActive: false,
+        deletedAt: new Date("2026-04-01T00:00:00.000Z"),
+        deletedBy: "admin-1",
+      });
+      const updated = createUserDoc({
+        _id: "user-1",
+        role: ROLES.ADMIN,
+        isActive: true,
+      });
+
+      mockUserModel.findById
+        .mockReturnValueOnce(current)
+        .mockReturnValueOnce(updated);
+      mockUserModel.findOne.mockResolvedValue(null);
+
+      const result = await userService.updateUser(
+        "user-1",
+        {
+          isActive: true,
+        },
+        { id: "admin-1", role: ROLES.ADMIN },
+      );
+
+      expect(result.isActive).toBe(true);
+      expect(result.deletedAt).toBeNull();
+      expect(result.deletedBy).toBeNull();
       expect(current.save).toHaveBeenCalledTimes(1);
     });
 

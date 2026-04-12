@@ -17,6 +17,11 @@ const DechetSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    icon: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     uniteMesure: {
       type: String,
       enum: ["kg", "tonne", "litre", "unite"],

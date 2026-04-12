@@ -23,6 +23,17 @@ Les donnees creees ou remises a jour sont :
 - 1 collecte
 - 1 rapport
 
+## Mot de passe par defaut des utilisateurs crees
+
+Quand un utilisateur est cree via l'API, son mot de passe initial est `123456` si aucun mot de passe n'est fourni dans la requete.
+
+Le module `auth` expose aussi:
+
+- `POST /api/v1/auth/change-password` pour changer le mot de passe du compte connecte
+- `POST /api/v1/auth/forgot-password/request` pour demander un code a 6 chiffres
+- `POST /api/v1/auth/forgot-password/verify` pour verifier le code
+- `POST /api/v1/auth/forgot-password/reset` pour definir le nouveau mot de passe
+
 Le bootstrap est idempotent :
 
 - si la donnee n'existe pas, elle est creee

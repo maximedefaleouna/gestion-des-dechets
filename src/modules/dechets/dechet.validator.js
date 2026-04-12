@@ -6,6 +6,7 @@ const allowedCreateFields = [
   "nom",
   "categorie",
   "description",
+  "icon",
   "uniteMesure",
   "dangereux",
 ];
@@ -67,6 +68,11 @@ const validateCreateDechet = [
     .trim()
     .isString()
     .withMessage("La description du dechet doit etre une chaine de caractere"),
+  body("icon")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("L'icone du dechet doit etre une chaine de caractere"),
   body("uniteMesure")
     .optional()
     .trim()
@@ -100,6 +106,11 @@ const validateUpdateDechet = [
     .trim()
     .isString()
     .withMessage("La description du dechet doit etre une chaine de caractere"),
+  body("icon")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("L'icone du dechet doit etre une chaine de caractere"),
   body("uniteMesure")
     .optional()
     .trim()

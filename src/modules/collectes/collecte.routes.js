@@ -14,9 +14,6 @@ router.use(authenticateToken);
 // Routes de base
 router.get("/", collecteController.getCollectes);
 router.post("/", collecteController.createCollecte);
-router.get("/:id", collecteController.getCollecteById);
-router.patch("/:id", collecteController.updateCollecte);
-router.delete("/:id", collecteController.deleteCollecte);
 
 // Routes de statistiques (réservées aux ADMIN et SUPER_ADMIN)
 router.get(
@@ -29,5 +26,9 @@ router.get(
   authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
   collecteController.getStatsByStation
 );
+
+router.get("/:id", collecteController.getCollecteById);
+router.patch("/:id", collecteController.updateCollecte);
+router.delete("/:id", collecteController.deleteCollecte);
 
 module.exports = router;

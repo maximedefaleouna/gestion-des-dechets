@@ -2,7 +2,7 @@ const User = require("../../modules/users/user.model");
 const Station = require("../../modules/stations/station.model");
 const Dechet = require("../../modules/dechets/dechet.model");
 const Collecte = require("../../modules/collectes/collecte.model");
-const Rapport = require("../../modules/rapport/rapport.model");
+const rapportService = require("../../modules/rapport/rapport.service");
 const logger = require("../utils/logger");
 
 const seedUsersConfig = {
@@ -33,6 +33,7 @@ const seedDechetConfig = {
   nom: "Plastique PET",
   categorie: "Recyclable",
   description: "Dechet plastique de demonstration cree automatiquement.",
+  icon: "recycle",
   uniteMesure: "kg",
   dangereux: false,
 };
@@ -162,42 +163,33 @@ const upsertCollecte = async ({ stationId, dechetId, agentId }) => {
   return collecte;
 };
 
-const upsertRapport = async ({ stationId, adminId, collecte }) => {
+const buildRapport = async ({ stationId, adminId, collecte }) => {
   const startDate = new Date(collecte.dateCollecte || new Date());
   startDate.setHours(0, 0, 0, 0);
 
   const endDate = new Date(collecte.dateCollecte || new Date());
   endDate.setHours(23, 59, 59, 999);
 
-  const rapport = await Rapport.findOneAndUpdate(
-    { titre: seedRapportConfig.titre },
-    {
-      $set: {
-        description: seedRapportConfig.description,
-        station: stationId,
-        generePar: adminId,
-        periode: {
-          dateDebut: startDate,
-          dateFin: endDate,
-        },
-        totalCollectes: 1,
-        quantiteTotale: collecte.quantite,
-        statut: seedRapportConfig.statut,
-      },
-      $setOnInsert: {
-        titre: seedRapportConfig.titre,
-        createdAt: new Date(),
-      },
-    },
-    {
-      returnDocument: "after",
-      upsert: true,
-      setDefaultsOnInsert: true,
-      runValidators: true,
-    },
-  );
+  const data = await rapportService.buildRapportData({
+    dateDebut: startDate,
+    dateFin: endDate,
+  });
 
-  return rapport;
+  return {
+    titre: seedRapportConfig.titre,
+    description: seedRapportConfig.description,
+    station: stationId,
+    generePar: adminId,
+    ...data,
+    periode: {
+      dateDebut: startDate,
+      dateFin: endDate,
+    },
+    statut: seedRapportConfig.statut,
+    genereLe: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 };
 
 const bootstrapInitialData = async () => {
@@ -212,7 +204,7 @@ const bootstrapInitialData = async () => {
     dechetId: dechet._id,
     agentId: agent._id,
   });
-  const rapport = await upsertRapport({
+  const rapport = await buildRapport({
     stationId: station._id,
     adminId: admin._id,
     collecte,

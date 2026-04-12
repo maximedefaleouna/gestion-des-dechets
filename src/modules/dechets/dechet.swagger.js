@@ -26,6 +26,11 @@
  *           type: string
  *           nullable: true
  *           example: Bouteilles et emballages PET destines au recyclage.
+ *         icon:
+ *           type: string
+ *           nullable: true
+ *           description: Identifiant de l'icone associee au dechet.
+ *           example: recycle
  *         uniteMesure:
  *           $ref: '#/components/schemas/DechetUnit'
  *         dangereux:
@@ -58,6 +63,10 @@
  *           type: string
  *           description: Description libre du dechet.
  *           example: Bouteilles et emballages PET destines au recyclage.
+ *         icon:
+ *           type: string
+ *           description: Identifiant de l'icone associee au dechet.
+ *           example: recycle
  *         uniteMesure:
  *           allOf:
  *             - $ref: '#/components/schemas/DechetUnit'
@@ -78,6 +87,9 @@
  *         description:
  *           type: string
  *           example: Flux de plastique PET trie et compact.
+ *         icon:
+ *           type: string
+ *           example: recycle
  *         uniteMesure:
  *           $ref: '#/components/schemas/DechetUnit'
  *         dangereux:
@@ -127,6 +139,7 @@
  *                   nom: Plastique PET
  *                   categorie: Recyclable
  *                   description: Bouteilles et emballages PET destines au recyclage.
+ *                   icon: recycle
  *                   uniteMesure: kg
  *                   dangereux: false
  *                   createdAt: 2026-04-08T09:30:00.000Z
@@ -185,6 +198,7 @@
  *                 nom: Plastique PET
  *                 categorie: Recyclable
  *                 description: Bouteilles et emballages PET destines au recyclage.
+ *                 icon: recycle
  *                 uniteMesure: kg
  *                 dangereux: false
  *                 createdAt: 2026-04-08T09:30:00.000Z

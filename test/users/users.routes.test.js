@@ -100,7 +100,6 @@ describe("Users routes", () => {
           nom: "Martin",
           prenom: "Alice",
           email: "alice.martin@example.com",
-          password: "Secret123!",
         });
 
       expect(response.status).toBe(201);
@@ -113,7 +112,6 @@ describe("Users routes", () => {
           nom: "Martin",
           prenom: "Alice",
           email: "alice.martin@example.com",
-          password: "Secret123!",
         },
         mockCurrentUser,
       );
@@ -136,7 +134,7 @@ describe("Users routes", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: "nom, prenom, email et password sont obligatoires",
+        message: "nom, prenom et email sont obligatoires",
       });
       expect(userService.createUser).not.toHaveBeenCalled();
     });

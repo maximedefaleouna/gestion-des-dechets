@@ -127,6 +127,108 @@
  *         message:
  *           type: string
  *           example: Deconnexion reussie
+ *     ChangePasswordRequest:
+ *       type: object
+ *       required: [currentPassword, newPassword, confirmNewPassword]
+ *       properties:
+ *         currentPassword:
+ *           type: string
+ *           format: password
+ *           example: Ancien123!
+ *         newPassword:
+ *           type: string
+ *           format: password
+ *           example: Nouveau123!
+ *         confirmNewPassword:
+ *           type: string
+ *           format: password
+ *           example: Nouveau123!
+ *     SimpleMessageResponse:
+ *       type: object
+ *       required: [message]
+ *       properties:
+ *         message:
+ *           type: string
+ *     ForgotPasswordRequestRequest:
+ *       type: object
+ *       required: [email]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: agent@recycletrack.local
+ *     ForgotPasswordRequestResponse:
+ *       type: object
+ *       required: [message, data]
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Si un compte existe avec cet email, un code de verification a ete genere
+ *         data:
+ *           type: object
+ *           required: [email, expiresAt]
+ *           properties:
+ *             email:
+ *               type: string
+ *               format: email
+ *             expiresAt:
+ *               type: string
+ *               format: date-time
+ *             verificationCode:
+ *               type: string
+ *               nullable: true
+ *               description: Present uniquement hors production pour faciliter les tests locaux.
+ *               example: 483921
+ *     ForgotPasswordVerifyRequest:
+ *       type: object
+ *       required: [email, code]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: agent@recycletrack.local
+ *         code:
+ *           type: string
+ *           example: "483921"
+ *     ForgotPasswordVerifyResponse:
+ *       type: object
+ *       required: [message, data]
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Code de verification valide
+ *         data:
+ *           type: object
+ *           required: [email, resetToken, expiresAt]
+ *           properties:
+ *             email:
+ *               type: string
+ *               format: email
+ *             resetToken:
+ *               type: string
+ *               description: Jeton temporaire a transmettre a la derniere etape.
+ *             expiresAt:
+ *               type: string
+ *               format: date-time
+ *     ForgotPasswordResetRequest:
+ *       type: object
+ *       required: [email, resetToken, newPassword, confirmNewPassword]
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: agent@recycletrack.local
+ *         resetToken:
+ *           type: string
+ *           example: 9a2c4d...f0b1
+ *         newPassword:
+ *           type: string
+ *           format: password
+ *           example: Nouveau123!
+ *         confirmNewPassword:
+ *           type: string
+ *           format: password
+ *           example: Nouveau123!
  *
  * /api/v1/auth/login:
  *   post:
@@ -296,6 +398,127 @@
  *               message: Ce compte est desactive
  *       '500':
  *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ * /api/v1/auth/change-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Changer le mot de passe du compte connecte
+ *     description: Route protegee par JWT Bearer. L'utilisateur doit fournir son ancien mot de passe, le nouveau et sa confirmation.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ChangePasswordRequest'
+ *     responses:
+ *       '200':
+ *         description: Mot de passe modifie avec succes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SimpleMessageResponse'
+ *             example:
+ *               message: Mot de passe modifie avec succes
+ *       '400':
+ *         description: Donnees invalides ou ancien mot de passe incorrect
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '401':
+ *         description: Token JWT absent, invalide ou expire
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '403':
+ *         description: Compte desactive
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ * /api/v1/auth/forgot-password/request:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Demander un code de reinitialisation
+ *     description: |
+ *       Route publique.
+ *       L'API genere un code de verification a 6 chiffres pour l'email fourni.
+ *       En environnement de developpement, le code peut aussi etre renvoye dans la reponse pour simplifier les tests.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordRequestRequest'
+ *     responses:
+ *       '200':
+ *         description: Code genere
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ForgotPasswordRequestResponse'
+ *       '400':
+ *         description: Email absent ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ * /api/v1/auth/forgot-password/verify:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Verifier le code de reinitialisation
+ *     description: Route publique. Le code doit contenir 6 chiffres.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordVerifyRequest'
+ *     responses:
+ *       '200':
+ *         description: Code valide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ForgotPasswordVerifyResponse'
+ *       '400':
+ *         description: Code invalide, expire ou donnees manquantes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ * /api/v1/auth/forgot-password/reset:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Reinitialiser le mot de passe
+ *     description: Route publique. Utilise le resetToken retourne par l'etape de verification.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordResetRequest'
+ *     responses:
+ *       '200':
+ *         description: Mot de passe reinitialise avec succes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SimpleMessageResponse'
+ *             example:
+ *               message: Mot de passe reinitialise avec succes
+ *       '400':
+ *         description: Donnees invalides ou session de reinitialisation expiree
  *         content:
  *           application/json:
  *             schema:

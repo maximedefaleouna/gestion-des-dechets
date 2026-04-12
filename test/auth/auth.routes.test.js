@@ -1,3 +1,22 @@
+let mockCurrentUser = {
+  id: "user-1",
+  email: "jane.doe@example.com",
+  role: "ADMIN",
+  isActive: true,
+};
+
+jest.mock("../../src/common/utils/autorize", () => {
+  const actual = jest.requireActual("../../src/common/utils/autorize");
+
+  return {
+    ...actual,
+    authenticateToken: (req, res, next) => {
+      req.user = mockCurrentUser;
+      next();
+    },
+  };
+});
+
 jest.mock("../../src/modules/auth/auth.service");
 
 const request = require("supertest");
@@ -7,6 +26,12 @@ const authService = require("../../src/modules/auth/auth.service");
 describe("Auth routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCurrentUser = {
+      id: "user-1",
+      email: "jane.doe@example.com",
+      role: "ADMIN",
+      isActive: true,
+    };
   });
 
   describe("POST /api/v1/auth/login", () => {
@@ -139,6 +164,113 @@ describe("Auth routes", () => {
       });
       expect(authService.logout).toHaveBeenCalledWith({
         refreshToken: "old-refresh-token",
+      });
+    });
+  });
+
+  describe("POST /api/v1/auth/change-password", () => {
+    it("changes the password for the authenticated user", async () => {
+      const payload = { message: "Mot de passe modifie avec succes" };
+
+      authService.changePassword.mockResolvedValue(payload);
+
+      const response = await request(app)
+        .post("/api/v1/auth/change-password")
+        .send({
+          currentPassword: "old-secret",
+          newPassword: "new-secret",
+          confirmNewPassword: "new-secret",
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(payload);
+      expect(authService.changePassword).toHaveBeenCalledWith(
+        mockCurrentUser,
+        {
+          currentPassword: "old-secret",
+          newPassword: "new-secret",
+          confirmNewPassword: "new-secret",
+        },
+      );
+    });
+  });
+
+  describe("POST /api/v1/auth/forgot-password/request", () => {
+    it("requests a reset code for the email address", async () => {
+      const payload = {
+        message: "Si un compte existe avec cet email, un code de verification a ete genere",
+        data: {
+          email: "jane.doe@example.com",
+          expiresAt: "2026-04-12T12:00:00.000Z",
+          verificationCode: "123456",
+        },
+      };
+
+      authService.requestPasswordReset.mockResolvedValue(payload);
+
+      const response = await request(app)
+        .post("/api/v1/auth/forgot-password/request")
+        .send({ email: "jane.doe@example.com" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(payload);
+      expect(authService.requestPasswordReset).toHaveBeenCalledWith({
+        email: "jane.doe@example.com",
+      });
+    });
+  });
+
+  describe("POST /api/v1/auth/forgot-password/verify", () => {
+    it("verifies the reset code and returns a reset token", async () => {
+      const payload = {
+        message: "Code de verification valide",
+        data: {
+          email: "jane.doe@example.com",
+          resetToken: "reset-token",
+          expiresAt: "2026-04-12T12:15:00.000Z",
+        },
+      };
+
+      authService.verifyPasswordResetCode.mockResolvedValue(payload);
+
+      const response = await request(app)
+        .post("/api/v1/auth/forgot-password/verify")
+        .send({
+          email: "jane.doe@example.com",
+          code: "123456",
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(payload);
+      expect(authService.verifyPasswordResetCode).toHaveBeenCalledWith({
+        email: "jane.doe@example.com",
+        code: "123456",
+      });
+    });
+  });
+
+  describe("POST /api/v1/auth/forgot-password/reset", () => {
+    it("resets the password after verification", async () => {
+      const payload = { message: "Mot de passe reinitialise avec succes" };
+
+      authService.resetPassword.mockResolvedValue(payload);
+
+      const response = await request(app)
+        .post("/api/v1/auth/forgot-password/reset")
+        .send({
+          email: "jane.doe@example.com",
+          resetToken: "reset-token",
+          newPassword: "new-secret",
+          confirmNewPassword: "new-secret",
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(payload);
+      expect(authService.resetPassword).toHaveBeenCalledWith({
+        email: "jane.doe@example.com",
+        resetToken: "reset-token",
+        newPassword: "new-secret",
+        confirmNewPassword: "new-secret",
       });
     });
   });
