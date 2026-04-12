@@ -63,7 +63,7 @@ const seedRapportConfig = {
   statut: "GENERE",
 };
 
-const upsertUser = async (payload, createdBy) => {
+const upsertUser = async (payload, createdBy, updatedBy = createdBy) => {
   let user = await User.findOne({ email: payload.email }).select(
     "+password +refreshToken",
   );
@@ -76,6 +76,7 @@ const upsertUser = async (payload, createdBy) => {
       password: payload.password,
       role: payload.role,
       createdBy,
+      updatedBy,
       isActive: true,
       deletedAt: null,
       deletedBy: null,
@@ -87,6 +88,7 @@ const upsertUser = async (payload, createdBy) => {
     user.password = payload.password;
     user.role = payload.role;
     user.createdBy = createdBy;
+    user.updatedBy = updatedBy;
     user.isActive = true;
     user.deletedAt = null;
     user.deletedBy = null;
@@ -97,10 +99,20 @@ const upsertUser = async (payload, createdBy) => {
   return user;
 };
 
-const upsertDechet = async () => {
+const upsertDechet = async (superAdminId) => {
   const dechet = await Dechet.findOneAndUpdate(
     { nom: seedDechetConfig.nom },
-    { $set: seedDechetConfig },
+    {
+      $set: {
+        ...seedDechetConfig,
+        createdBy: superAdminId,
+        updatedBy: superAdminId,
+        updatedAt: new Date(),
+        deletedAt: null,
+        deletedBy: null,
+        isDeleted: false,
+      },
+    },
     {
       returnDocument: "after",
       upsert: true,
@@ -112,7 +124,7 @@ const upsertDechet = async () => {
   return dechet;
 };
 
-const upsertStation = async (dechetId) => {
+const upsertStation = async (dechetId, superAdminId) => {
   const station = await Station.findOneAndUpdate(
     {
       nom: seedStationConfig.nom,
@@ -122,6 +134,12 @@ const upsertStation = async (dechetId) => {
       $set: {
         ...seedStationConfig,
         typesDechetsAcceptes: [dechetId],
+        createdBy: superAdminId,
+        updatedBy: superAdminId,
+        updatedAt: new Date(),
+        deletedAt: null,
+        deletedBy: null,
+        isDeleted: false,
       },
     },
     {
@@ -135,7 +153,7 @@ const upsertStation = async (dechetId) => {
   return station;
 };
 
-const upsertCollecte = async ({ stationId, dechetId, agentId }) => {
+const upsertCollecte = async ({ stationId, dechetId, agentId, superAdminId }) => {
   const collecte = await Collecte.findOneAndUpdate(
     { commentaire: seedCollecteConfig.commentaire },
     {
@@ -145,6 +163,12 @@ const upsertCollecte = async ({ stationId, dechetId, agentId }) => {
         agent: agentId,
         quantite: seedCollecteConfig.quantite,
         statut: seedCollecteConfig.statut,
+        createdBy: superAdminId,
+        updatedBy: superAdminId,
+        updatedAt: new Date(),
+        deletedAt: null,
+        deletedBy: null,
+        isDeleted: false,
       },
       $setOnInsert: {
         commentaire: seedCollecteConfig.commentaire,
@@ -163,7 +187,7 @@ const upsertCollecte = async ({ stationId, dechetId, agentId }) => {
   return collecte;
 };
 
-const buildRapport = async ({ stationId, adminId, collecte }) => {
+const buildRapport = async ({ stationId, creatorId, collecte }) => {
   const startDate = new Date(collecte.dateCollecte || new Date());
   startDate.setHours(0, 0, 0, 0);
 
@@ -179,7 +203,7 @@ const buildRapport = async ({ stationId, adminId, collecte }) => {
     titre: seedRapportConfig.titre,
     description: seedRapportConfig.description,
     station: stationId,
-    generePar: adminId,
+    generePar: creatorId,
     ...data,
     periode: {
       dateDebut: startDate,
@@ -195,18 +219,19 @@ const buildRapport = async ({ stationId, adminId, collecte }) => {
 const bootstrapInitialData = async () => {
   const superAdmin = await upsertUser(seedUsersConfig.superAdmin, null);
   const admin = await upsertUser(seedUsersConfig.admin, superAdmin._id);
-  const agent = await upsertUser(seedUsersConfig.agent, admin._id);
+  const agent = await upsertUser(seedUsersConfig.agent, superAdmin._id);
 
-  const dechet = await upsertDechet();
-  const station = await upsertStation(dechet._id);
+  const dechet = await upsertDechet(superAdmin._id);
+  const station = await upsertStation(dechet._id, superAdmin._id);
   const collecte = await upsertCollecte({
     stationId: station._id,
     dechetId: dechet._id,
     agentId: agent._id,
+    superAdminId: superAdmin._id,
   });
   const rapport = await buildRapport({
     stationId: station._id,
-    adminId: admin._id,
+    creatorId: superAdmin._id,
     collecte,
   });
 

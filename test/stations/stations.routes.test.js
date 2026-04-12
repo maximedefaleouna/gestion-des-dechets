@@ -81,7 +81,7 @@ describe("Stations routes", () => {
         capaciteMax: 1500,
         typesDechetsAcceptes: ["507f1f77bcf86cd799439011"],
         localisation: { latitude: 6.2, longitude: 1.25 },
-      });
+      }, expect.objectContaining({ id: "admin-1", role: ROLES.ADMIN }));
     });
 
     it("rejects non-admin users", async () => {

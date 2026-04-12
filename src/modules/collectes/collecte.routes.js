@@ -13,7 +13,7 @@ router.use(authenticateToken);
 
 // Routes de base
 router.get("/", collecteController.getCollectes);
-router.post("/", collecteController.createCollecte);
+router.post("/", collecteController.createCollecte); // All authenticated users can create
 
 // Routes de statistiques (réservées aux ADMIN et SUPER_ADMIN)
 router.get(
@@ -27,8 +27,10 @@ router.get(
   collecteController.getStatsByStation
 );
 
+// Read: all authenticated users
 router.get("/:id", collecteController.getCollecteById);
-router.patch("/:id", collecteController.updateCollecte);
-router.delete("/:id", collecteController.deleteCollecte);
+// Update and Delete: ADMIN and SUPER_ADMIN only
+router.patch("/:id", authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN), collecteController.updateCollecte);
+router.delete("/:id", authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN), collecteController.deleteCollecte);
 
 module.exports = router;

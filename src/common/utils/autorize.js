@@ -57,6 +57,7 @@ const authenticateToken = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error("Authentication error:", error);
     next(
       error.statusCode
         ? error
@@ -65,23 +66,25 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-const authorizeRoles = (...allowedRoles) => (req, res, next) => {
-  if (!req.user) {
-    return next(createError("Utilisateur non authentifie", 401));
-  }
+const authorizeRoles =
+  (...allowedRoles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      return next(createError("Utilisateur non authentifie", 401));
+    }
 
-  if (req.user.role === ROLES.SUPER_ADMIN) {
+    if (req.user.role === ROLES.SUPER_ADMIN) {
+      return next();
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return next(
+        createError("Vous n'avez pas l'autorisation pour cette action", 403),
+      );
+    }
+
     return next();
-  }
-
-  if (!allowedRoles.includes(req.user.role)) {
-    return next(
-      createError("Vous n'avez pas l'autorisation pour cette action", 403),
-    );
-  }
-
-  return next();
-};
+  };
 
 module.exports = {
   ROLES,

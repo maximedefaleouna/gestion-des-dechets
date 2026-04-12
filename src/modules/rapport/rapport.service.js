@@ -45,14 +45,11 @@ const toDate = (value, errorMessage) => {
 
 const getDefaultPeriod = () => {
   const now = new Date();
-  const dateFin = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999),
-  );
   const dateDebut = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, 1, 0, 0, 0, 0),
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1, 0, 0, 0, 0),
   );
 
-  return { dateDebut, dateFin };
+  return { dateDebut, dateFin: now };
 };
 
 const getDashboardDefaultPeriod = () => {
@@ -97,6 +94,7 @@ const normalizeDashboardPeriod = (period = null) => {
 };
 
 const buildDateFilter = (period) => ({
+  isDeleted: { $ne: true },
   dateCollecte: {
     $gte: period.dateDebut,
     $lte: period.dateFin,
@@ -189,15 +187,7 @@ const getPreviousEquivalentPeriod = (period) => {
 
 const getMonthToDatePeriod = () => {
   const now = new Date();
-  const dateDebut = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1,
-    0,
-    0,
-    0,
-    0,
-  );
+  const dateDebut = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
 
   return { dateDebut, dateFin: now };
 };
@@ -499,6 +489,13 @@ const aggregateCollections = async (period) => {
       quantiteKg: station.quantiteKg,
       nombreCollectes: station.nombreCollectes,
     })),
+    repartitionParType: repartitionParTypeDechet.map((dechet) => ({
+      dechetId: dechet.dechetId ? dechet.dechetId.toString() : null,
+      nom: dechet.nom,
+      categorie: dechet.categorie,
+      quantiteKg: dechet.quantiteKg,
+      nombreCollectes: dechet.nombreCollectes,
+    })),
     repartitionParTypeDechet: repartitionParTypeDechet.map((dechet) => ({
       dechetId: dechet.dechetId ? dechet.dechetId.toString() : null,
       nom: dechet.nom,
@@ -594,9 +591,7 @@ const buildDashboardData = async (period = null) => {
 
   const repartitionParType = typeTotals.map((type, index) => {
     const pourcentage = chartPeriodSummary.totalQuantiteKg
-      ? Math.round(
-          (type.quantiteKg / chartPeriodSummary.totalQuantiteKg) * 100,
-        )
+      ? Math.round((type.quantiteKg / chartPeriodSummary.totalQuantiteKg) * 100)
       : 0;
 
     return {
@@ -619,11 +614,15 @@ const buildDashboardData = async (period = null) => {
       stationsActives: {
         valeur: activeStations,
         total: totalStations,
-        pourcentage: totalStations ? Math.round((activeStations / totalStations) * 100) : 0,
+        pourcentage: totalStations
+          ? Math.round((activeStations / totalStations) * 100)
+          : 0,
       },
       totalCollecte: {
         valeurKg: currentMonthSummary.totalQuantiteKg,
-        valeurTonne: Number((currentMonthSummary.totalQuantiteKg / 1000).toFixed(1)),
+        valeurTonne: Number(
+          (currentMonthSummary.totalQuantiteKg / 1000).toFixed(1),
+        ),
         libelle: "Ce mois",
         variationPourcent: computeVariation(
           currentMonthSummary.totalQuantiteKg,
@@ -641,7 +640,9 @@ const buildDashboardData = async (period = null) => {
       agentsActifs: {
         valeur: activeAgents,
         total: totalAgents,
-        pourcentage: totalAgents ? Math.round((activeAgents / totalAgents) * 100) : 0,
+        pourcentage: totalAgents
+          ? Math.round((activeAgents / totalAgents) * 100)
+          : 0,
       },
     },
     collectesMensuelles: {
@@ -659,23 +660,23 @@ const buildRapportData = async (period = null) => {
 };
 
 const getRapportStatistiques = async (currentUser, period = null) => {
-  if (currentUser.role === ROLES.AGENT) {
-    throw createError(
-      "Vous n'avez pas l'autorisation pour consulter les rapports",
-      403,
-    );
-  }
+  // if (currentUser.role === ROLES.AGENT) {
+  //   throw createError(
+  //     "Vous n'avez pas l'autorisation pour consulter les rapports",
+  //     403,
+  //   );
+  // }
 
   return buildRapportData(period);
 };
 
 const getRapportDashboard = async (currentUser, period = null) => {
-  if (currentUser.role === ROLES.AGENT) {
-    throw createError(
-      "Vous n'avez pas l'autorisation pour consulter le tableau de bord",
-      403,
-    );
-  }
+  // if (currentUser.role === ROLES.AGENT) {
+  //   throw createError(
+  //     "Vous n'avez pas l'autorisation pour consulter le tableau de bord",
+  //     403,
+  //   );
+  // }
 
   return buildDashboardData(period);
 };

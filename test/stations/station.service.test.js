@@ -1,7 +1,8 @@
 const mockStationModel = jest.fn();
 mockStationModel.find = jest.fn();
+mockStationModel.findOne = jest.fn();
 mockStationModel.findById = jest.fn();
-mockStationModel.findByIdAndUpdate = jest.fn();
+mockStationModel.findOneAndUpdate = jest.fn();
 mockStationModel.updateOne = jest.fn();
 
 jest.mock("../../src/modules/stations/station.model", () => mockStationModel);
@@ -61,13 +62,13 @@ describe("station.service", () => {
 
   it("returns a station by id", async () => {
     const station = createStationDoc({ _id: "station-2" });
-    mockStationModel.findById.mockResolvedValue(station);
+    mockStationModel.findOne.mockResolvedValue(station);
 
     await expect(stationService.getById("station-2")).resolves.toBe(station);
   });
 
   it("rejects unknown stations when reading by id", async () => {
-    mockStationModel.findById.mockResolvedValue(null);
+    mockStationModel.findOne.mockResolvedValue(null);
 
     await expect(stationService.getById("station-404")).rejects.toThrow(
       "Station non trouvee",
@@ -79,20 +80,27 @@ describe("station.service", () => {
       _id: "station-2",
       nom: "Centre-Ville Renforce",
     });
-    mockStationModel.findByIdAndUpdate.mockResolvedValue(updatedStation);
+    mockStationModel.findOneAndUpdate.mockResolvedValue(updatedStation);
 
     await expect(
       stationService.updateById("station-2", { nom: "Centre-Ville Renforce" }),
     ).resolves.toBe(updatedStation);
-    expect(mockStationModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      "station-2",
-      { nom: "Centre-Ville Renforce" },
-      { new: true },
+    expect(mockStationModel.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        _id: "station-2",
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: {
+          nom: "Centre-Ville Renforce",
+        },
+      },
+      { new: true, runValidators: true },
     );
   });
 
   it("rejects unknown station updates", async () => {
-    mockStationModel.findByIdAndUpdate.mockResolvedValue(null);
+    mockStationModel.findOneAndUpdate.mockResolvedValue(null);
 
     await expect(
       stationService.updateById("station-404", { nom: "Centre-Ville" }),
@@ -107,20 +115,29 @@ describe("station.service", () => {
       _id: "station-2",
       isDeleted: true,
     });
-    mockStationModel.findByIdAndUpdate.mockResolvedValue(deletedStation);
+    mockStationModel.findOneAndUpdate.mockResolvedValue(deletedStation);
 
     await expect(stationService.deleteById("station-2")).resolves.toBe(
       deletedStation,
     );
-    expect(mockStationModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      "station-2",
-      { $set: { isDeleted: true } },
+    expect(mockStationModel.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        _id: "station-2",
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: expect.objectContaining({
+          isDeleted: true,
+          deletedAt: expect.any(Date),
+          deletedBy: null,
+        }),
+      },
       { new: true },
     );
   });
 
   it("rejects unknown station deletions", async () => {
-    mockStationModel.findByIdAndUpdate.mockResolvedValue(null);
+    mockStationModel.findOneAndUpdate.mockResolvedValue(null);
 
     await expect(stationService.deleteById("station-404")).rejects.toMatchObject({
       message: "Station non trouvee",

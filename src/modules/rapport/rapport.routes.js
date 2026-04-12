@@ -10,15 +10,17 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+// Allow all authenticated users (ADMIN, SUPER_ADMIN, AGENT)
 router.get(
   "/dashboard",
-  authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
+  authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.AGENT),
   rapportController.getDashboard,
 );
 
+// Allow all authenticated users (ADMIN, SUPER_ADMIN, AGENT)
 router.get(
   "/statistiques",
-  authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
+  authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.AGENT),
   rapportController.getStatistiques,
 );
 

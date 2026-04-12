@@ -148,6 +148,11 @@ describe("collecte.service", () => {
           quantite: 200,
           statut: "VALIDEE",
           commentaire: "Collecte du matin",
+          createdBy: "agent-1",
+          updatedBy: "agent-1",
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
         }),
       );
       expect(station.save).toHaveBeenCalledTimes(1);
@@ -293,10 +298,12 @@ describe("collecte.service", () => {
       expect(mockCollecteModel.find).toHaveBeenCalledWith({
         statut: "VALIDEE",
         agent: "agent-1",
+        isDeleted: { $ne: true },
       });
       expect(mockCollecteModel.countDocuments).toHaveBeenCalledWith({
         statut: "VALIDEE",
         agent: "agent-1",
+        isDeleted: { $ne: true },
       });
       expect(result).toEqual({
         data: [
@@ -343,6 +350,7 @@ describe("collecte.service", () => {
           $lte: new Date("2026-04-30"),
         },
         agent: "agent-2",
+        isDeleted: { $ne: true },
       });
     });
 
@@ -359,6 +367,7 @@ describe("collecte.service", () => {
 
       expect(mockCollecteModel.find).toHaveBeenCalledWith({
         agent: "agent-1",
+        isDeleted: { $ne: true },
       });
     });
   });
@@ -635,7 +644,6 @@ describe("collecte.service", () => {
 
       mockCollecteModel.findById.mockResolvedValue(collecte);
       mockStationModel.findById.mockResolvedValue(station);
-      mockCollecteModel.findByIdAndDelete.mockResolvedValue(collecte);
 
       const result = await collecteService.deleteCollecte("collecte-1", {
         id: "admin-1",
@@ -646,9 +654,9 @@ describe("collecte.service", () => {
         message: expect.stringContaining("Collecte supprim"),
       });
       expect(station.save).toHaveBeenCalledTimes(1);
-      expect(mockCollecteModel.findByIdAndDelete).toHaveBeenCalledWith(
-        "collecte-1",
-      );
+      expect(collecte.isDeleted).toBe(true);
+      expect(collecte.deletedBy).toBe("admin-1");
+      expect(collecte.save).toHaveBeenCalledTimes(1);
     });
 
     it("deletes a collecte even when the station is missing", async () => {
@@ -656,7 +664,6 @@ describe("collecte.service", () => {
 
       mockCollecteModel.findById.mockResolvedValue(collecte);
       mockStationModel.findById.mockResolvedValue(null);
-      mockCollecteModel.findByIdAndDelete.mockResolvedValue(collecte);
 
       const result = await collecteService.deleteCollecte("collecte-1", {
         id: "admin-1",
@@ -695,7 +702,6 @@ describe("collecte.service", () => {
 
       mockCollecteModel.findById.mockResolvedValue(collecte);
       mockStationModel.findById.mockResolvedValue(station);
-      mockCollecteModel.findByIdAndDelete.mockResolvedValue(collecte);
 
       const result = await collecteService.deleteCollecte("collecte-1", {
         id: "super-1",

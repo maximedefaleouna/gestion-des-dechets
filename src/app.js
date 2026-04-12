@@ -10,11 +10,13 @@ const collecteRoutes = require("./modules/collectes/collecte.routes");
 const rapportRoutes = require("./modules/rapport/rapport.routes");
 
 const stationRoutes = require("./modules/stations/station.routes");
+const morgan = require("morgan");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.send("Projet Goupe 2");

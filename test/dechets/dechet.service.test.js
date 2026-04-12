@@ -1,7 +1,8 @@
 const mockDechetModel = jest.fn();
 mockDechetModel.find = jest.fn();
+mockDechetModel.findOne = jest.fn();
 mockDechetModel.findById = jest.fn();
-mockDechetModel.findByIdAndUpdate = jest.fn();
+mockDechetModel.findOneAndUpdate = jest.fn();
 
 jest.mock("../../src/modules/dechets/dechet.model", () => mockDechetModel);
 
@@ -55,13 +56,13 @@ describe("dechet.service", () => {
 
   it("returns a dechet by id", async () => {
     const dechet = createDechetDoc({ _id: "dechet-2" });
-    mockDechetModel.findById.mockResolvedValue(dechet);
+    mockDechetModel.findOne.mockResolvedValue(dechet);
 
     await expect(dechetService.getDechetById("dechet-2")).resolves.toBe(dechet);
   });
 
   it("rejects deleted dechets", async () => {
-    mockDechetModel.findById.mockResolvedValue(
+    mockDechetModel.findOne.mockResolvedValue(
       createDechetDoc({ _id: "dechet-2", isDeleted: true }),
     );
 
@@ -73,15 +74,27 @@ describe("dechet.service", () => {
 
   it("updates a dechet", async () => {
     const updated = createDechetDoc({ _id: "dechet-2", nom: "Metal" });
-    mockDechetModel.findByIdAndUpdate.mockResolvedValue(updated);
+    mockDechetModel.findOneAndUpdate.mockResolvedValue(updated);
 
     await expect(
       dechetService.updateDechet("dechet-2", { nom: "Metal" }),
     ).resolves.toBe(updated);
+    expect(mockDechetModel.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        _id: "dechet-2",
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: {
+          nom: "Metal",
+        },
+      },
+      { new: true, runValidators: true },
+    );
   });
 
   it("rejects unknown updates", async () => {
-    mockDechetModel.findByIdAndUpdate.mockResolvedValue(null);
+    mockDechetModel.findOneAndUpdate.mockResolvedValue(null);
 
     await expect(
       dechetService.updateDechet("dechet-2", { nom: "Metal" }),
@@ -93,20 +106,29 @@ describe("dechet.service", () => {
 
   it("soft-deletes a dechet", async () => {
     const deleted = createDechetDoc({ _id: "dechet-2" });
-    mockDechetModel.findByIdAndUpdate.mockResolvedValue(deleted);
+    mockDechetModel.findOneAndUpdate.mockResolvedValue(deleted);
 
     const result = await dechetService.deleteDechet("dechet-2");
 
     expect(result).toBe(deleted);
-    expect(mockDechetModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      "dechet-2",
-      { isDeleted: true },
+    expect(mockDechetModel.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        _id: "dechet-2",
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: expect.objectContaining({
+          isDeleted: true,
+          deletedAt: expect.any(Date),
+          deletedBy: null,
+        }),
+      },
       { new: true },
     );
   });
 
   it("rejects unknown deletions", async () => {
-    mockDechetModel.findByIdAndUpdate.mockResolvedValue(null);
+    mockDechetModel.findOneAndUpdate.mockResolvedValue(null);
 
     await expect(dechetService.deleteDechet("dechet-2")).rejects.toMatchObject({
       message: expect.stringContaining("Dechet non"),
