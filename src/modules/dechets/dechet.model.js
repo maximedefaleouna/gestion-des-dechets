@@ -11,11 +11,16 @@ const DechetSchema = new mongoose.Schema(
     categorie: {
       type: String,
       required: [true, "La categorie du dechet est obligatoire"],
-      enum: ["PLASTIQUE", "VERRE", "PAPIER", "METAL", "ELECTRONIQUE", "ORGANIQUE", "AUTRE"],
+      enum: ["Recyclable", "Non recyclable"],
     },
     description: {
       type: String,
       trim: true,
+    },
+    icon: {
+      type: String,
+      trim: true,
+      default: null,
     },
     uniteMesure: {
       type: String,
@@ -26,13 +31,18 @@ const DechetSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    recyclable: {
-      type: Boolean,
-      default: true,
-    },
+
     createdAt: {
       type: Date,
       default: Date.now,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {

@@ -49,7 +49,7 @@
  *           example: 2026-04-06T10:00:00.000Z
  *     CreateUserRequest:
  *       type: object
- *       required: [nom, prenom, email, password]
+ *       required: [nom, prenom, email]
  *       properties:
  *         nom:
  *           type: string
@@ -67,7 +67,7 @@
  *         password:
  *           type: string
  *           format: password
- *           description: Obligatoire, minimum 6 caracteres.
+ *           description: Facultatif. Si absent, l'API attribue le mot de passe par defaut `123456`.
  *           example: Agent123!
  *         role:
  *           allOf:
@@ -251,14 +251,12 @@
  *                 nom: Mensah
  *                 prenom: Koffi
  *                 email: koffi.mensah@recycletrack.com
- *                 password: Agent123!
  *                 role: AGENT
  *             createDefaultRole:
  *               value:
  *                 nom: Lawson
  *                 prenom: Nina
  *                 email: nina.lawson@recycletrack.com
- *                 password: Agent123!
  *     responses:
  *       '201':
  *         description: Utilisateur cree avec succes

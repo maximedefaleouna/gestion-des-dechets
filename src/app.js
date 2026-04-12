@@ -4,7 +4,12 @@ const swaggerUi = require("swagger-ui-express");
 const logger = require("./common/utils/logger");
 const swaggerSpec = require("./common/docs/swagger");
 const authRoutes = require("./modules/auth/auth.routes");
+const dechetRoutes = require("./modules/dechets/dechet.routes");
 const userRoutes = require("./modules/users/user.routes");
+const collecteRoutes = require("./modules/collectes/collecte.routes");
+const rapportRoutes = require("./modules/rapport/rapport.routes");
+
+const stationRoutes = require("./modules/stations/station.routes");
 
 const app = express();
 
@@ -29,7 +34,11 @@ app.use(
 );
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/dechets", dechetRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/stations", stationRoutes);
+app.use("/api/v1/collectes", collecteRoutes);
+app.use("/api/v1/rapports", rapportRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

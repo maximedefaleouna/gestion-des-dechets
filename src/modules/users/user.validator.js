@@ -47,7 +47,7 @@ const validateObjectId = [
 const validateCreateUser = [
   validateAllowedFields(
     allowedCreateFields,
-    "nom, prenom, email et password sont obligatoires",
+    "nom, prenom et email sont obligatoires",
   ),
   body("nom")
     .trim()
@@ -66,9 +66,7 @@ const validateCreateUser = [
     .withMessage("Format d'email invalide")
     .normalizeEmail(),
   body("password")
-    .notEmpty()
-    .withMessage("Le mot de passe est obligatoire")
-    .bail()
+    .optional()
     .isLength({ min: 6 })
     .withMessage("Le mot de passe doit contenir au moins 6 caracteres"),
   body("role")

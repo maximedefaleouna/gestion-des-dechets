@@ -35,8 +35,48 @@ const logout = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const result = await authService.changePassword(req.user, req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const requestPasswordReset = async (req, res, next) => {
+  try {
+    const result = await authService.requestPasswordReset(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyPasswordResetCode = async (req, res, next) => {
+  try {
+    const result = await authService.verifyPasswordResetCode(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const result = await authService.resetPassword(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
+  changePassword,
+  requestPasswordReset,
   login,
   logout,
+  resetPassword,
   refreshToken,
+  verifyPasswordResetCode,
 };

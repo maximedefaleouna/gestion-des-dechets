@@ -1,6 +1,8 @@
 const User = require("./user.model");
 const { ROLES } = require("../../common/utils/autorize");
 
+const DEFAULT_USER_PASSWORD = "123456";
+
 const createError = (message, statusCode) => {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -197,7 +199,7 @@ const createUser = async (payload, currentUser) => {
     nom: payload.nom,
     prenom: payload.prenom,
     email,
-    password: payload.password,
+    password: payload.password || DEFAULT_USER_PASSWORD,
     role: payload.role || ROLES.AGENT,
     createdBy: currentUser.id,
   });
