@@ -2,7 +2,7 @@ const dechetService = require("./dechet.service");
 
 const createDechet = async (req, res, next) => {
   try {
-    const dechet = await dechetService.createDechet(req.body);
+    const dechet = await dechetService.createDechet(req.body, req.user);
     res.status(201).json({
       message: "Dechet cree avec succes",
       data: dechet,
@@ -36,7 +36,11 @@ const getDechetById = async (req, res, next) => {
 };
 const updateDechet = async (req, res, next) => {
   try {
-    const dechet = await dechetService.updateDechet(req.params.id, req.body);
+    const dechet = await dechetService.updateDechet(
+      req.params.id,
+      req.body,
+      req.user,
+    );
     res.status(200).json({
       message: "Dechet mis a jour avec succes",
       data: dechet,
@@ -47,7 +51,7 @@ const updateDechet = async (req, res, next) => {
 };
 const deleteDechet = async (req, res, next) => {
   try {
-    const dechet = await dechetService.deleteDechet(req.params.id);
+    const dechet = await dechetService.deleteDechet(req.params.id, req.user);
     res.status(200).json({
       message: "Dechet supprime avec succes",
       data: dechet,

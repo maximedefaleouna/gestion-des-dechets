@@ -202,6 +202,7 @@ const createUser = async (payload, currentUser) => {
     password: payload.password || DEFAULT_USER_PASSWORD,
     role: payload.role || ROLES.AGENT,
     createdBy: currentUser.id,
+    updatedBy: currentUser.id,
   });
 
   const createdUser = await User.findById(user._id).populate(
@@ -258,6 +259,8 @@ const updateUser = async (userId, payload, currentUser) => {
     user.password = payload.password;
   }
 
+  user.updatedBy = currentUser.id;
+
   if (typeof payload.isActive === "boolean") {
     if (currentUser.role === ROLES.AGENT) {
       throw createError("Vous ne pouvez pas changer le statut du compte", 403);
@@ -296,6 +299,7 @@ const deleteUser = async (userId, currentUser) => {
   user.isActive = false;
   user.deletedAt = new Date();
   user.deletedBy = currentUser.id;
+  user.updatedBy = currentUser.id;
   user.refreshToken = null;
 
   await user.save();

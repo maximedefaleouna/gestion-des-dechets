@@ -212,10 +212,10 @@ describe("rapport.service", () => {
 
       const result = await rapportService.buildRapportData(null);
 
-      expect(result.periode).toEqual({
-        dateDebut: "2025-10-01T00:00:00.000Z",
-        dateFin: "2026-03-31T23:59:59.999Z",
-      });
+    expect(result.periode).toEqual({
+      dateDebut: "2025-11-01T00:00:00.000Z",
+      dateFin: "2026-04-12T10:00:00.000Z",
+    });
       expect(result.resume).toEqual({
         totalRecycleKg: 0,
         totalRecycleTonne: 0,

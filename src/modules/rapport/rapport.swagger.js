@@ -110,7 +110,7 @@
  *
  *     RapportStatistiquesData:
  *       type: object
- *       required: [periode, resume, evolutionMensuelle, collecteParStation, repartitionParTypeDechet]
+ *       required: [periode, resume, evolutionMensuelle, collecteParStation, repartitionParType]
  *       properties:
  *         periode:
  *           $ref: '#/components/schemas/RapportPeriod'
@@ -124,7 +124,7 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/RapportStationStat'
- *         repartitionParTypeDechet:
+ *         repartitionParType:
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/RapportDechetStat'

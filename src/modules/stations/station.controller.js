@@ -2,7 +2,7 @@ const stationService = require("./station.service");
 
 const createStation = async (req, res, next) => {
   try {
-    const station = await stationService.create(req.body);
+    const station = await stationService.create(req.body, req.user);
     res.status(201).json({
       message: "Station creee avec succes",
       data: station,
@@ -38,7 +38,11 @@ const getStation = async (req, res, next) => {
 
 const updateStation = async (req, res, next) => {
   try {
-    const station = await stationService.updateById(req.params.id, req.body);
+    const station = await stationService.updateById(
+      req.params.id,
+      req.body,
+      req.user,
+    );
     res.status(200).json({
       message: "Station mise a jour avec succes",
       data: station,
@@ -50,7 +54,7 @@ const updateStation = async (req, res, next) => {
 
 const deleteStation = async (req, res, next) => {
   try {
-    const station = await stationService.deleteById(req.params.id);
+    const station = await stationService.deleteById(req.params.id, req.user);
     res.status(200).json({
       message: "Station supprimee avec succes",
       data: station,

@@ -103,6 +103,7 @@ const bootstrapSuperAdmin = async () => {
     password: process.env.SUPER_ADMIN_PASSWORD || "SuperAdmin123!",
     role: "SUPER_ADMIN",
     createdBy: null,
+    updatedBy: null,
   };
 
   const superAdmin = await User.create(superAdminPayload);

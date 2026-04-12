@@ -95,7 +95,7 @@ describe("Dechets routes", () => {
         description: "Bouteille PET",
         uniteMesure: "kg",
         dangereux: false,
-      });
+      }, expect.objectContaining({ id: "admin-1", role: ROLES.ADMIN }));
     });
 
     it("rejects non-admin users", async () => {

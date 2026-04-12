@@ -122,7 +122,7 @@
  *     description: |
  *       Route protegee par JWT Bearer.
  *       Accessible a tout utilisateur authentifie.
- *       L'implementation actuelle retourne tous les dechets, y compris ceux deja supprimes logiquement (`isDeleted = true`).
+ *       L'implementation retourne uniquement les dechets actifs (`isDeleted != true`).
  *     security:
  *       - bearerAuth: []
  *     responses:

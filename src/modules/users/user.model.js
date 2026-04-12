@@ -39,6 +39,12 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     refreshToken: {
       type: String,
       default: null,
