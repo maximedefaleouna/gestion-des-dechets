@@ -89,7 +89,7 @@
  *
  *     RapportDechetStat:
  *       type: object
- *       required: [dechetId, nom, categorie, quantiteKg, nombreCollectes]
+ *       required: [nom, quantiteKg, nombreCollectes]
  *       properties:
  *         dechetId:
  *           type: string
@@ -97,16 +97,19 @@
  *           example: 6610ff1c8d6f3a001f2c9d10
  *         nom:
  *           type: string
- *           example: Plastique PET
+ *           description: Categorie du dechet (Regroupe par categorie)
+ *           example: Recyclable
  *         categorie:
  *           type: string
  *           example: Recyclable
  *         quantiteKg:
  *           type: number
- *           example: 1110
+ *           description: Total des quantites pour cette categorie
+ *           example: 2200
  *         nombreCollectes:
  *           type: integer
- *           example: 5
+ *           description: Nombre de collectes pour cette categorie
+ *           example: 15
  *
  *     RapportStatistiquesData:
  *       type: object
@@ -226,16 +229,19 @@
  *           nullable: true
  *         nom:
  *           type: string
- *           example: Verre
+ *           description: Categorie du dechet (Regroupe par categorie)
+ *           example: Recyclable
  *         categorie:
  *           type: string
  *           example: Recyclable
  *         quantiteKg:
  *           type: number
- *           example: 1110
+ *           description: Total des quantites pour cette categorie
+ *           example: 2200
  *         pourcentage:
  *           type: number
- *           example: 28
+ *           description: Pourcentage du total
+ *           example: 85
  *         couleur:
  *           type: string
  *           example: '#27ae60'

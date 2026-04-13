@@ -25,6 +25,10 @@
  *           type: boolean
  *           description: False signifie compte desactive par suppression logique.
  *           example: true
+ *         collectionsCount:
+ *           type: integer
+ *           description: Nombre de collectes effectuees par cet utilisateur.
+ *           example: 42
  *         createdBy:
  *           allOf:
  *             - $ref: '#/components/schemas/UserReference'

@@ -64,126 +64,70 @@ const seedRapportConfig = {
 };
 
 const upsertUser = async (payload, createdBy, updatedBy = createdBy) => {
-  let user = await User.findOne({ email: payload.email }).select(
-    "+password +refreshToken",
-  );
-
-  if (!user) {
-    user = new User({
-      nom: payload.nom,
-      prenom: payload.prenom,
-      email: payload.email,
-      password: payload.password,
-      role: payload.role,
-      createdBy,
-      updatedBy,
-      isActive: true,
-      deletedAt: null,
-      deletedBy: null,
-      refreshToken: null,
-    });
-  } else {
-    user.nom = payload.nom;
-    user.prenom = payload.prenom;
-    user.password = payload.password;
-    user.role = payload.role;
-    user.createdBy = createdBy;
-    user.updatedBy = updatedBy;
-    user.isActive = true;
-    user.deletedAt = null;
-    user.deletedBy = null;
-    user.refreshToken = null;
-  }
-
+  const user = new User({
+    nom: payload.nom,
+    prenom: payload.prenom,
+    email: payload.email,
+    password: payload.password,
+    role: payload.role,
+    createdBy,
+    updatedBy,
+    isActive: true,
+    deletedAt: null,
+    deletedBy: null,
+    refreshToken: null,
+  });
+  
   await user.save();
   return user;
 };
 
 const upsertDechet = async (superAdminId) => {
-  const dechet = await Dechet.findOneAndUpdate(
-    { nom: seedDechetConfig.nom },
-    {
-      $set: {
-        ...seedDechetConfig,
-        createdBy: superAdminId,
-        updatedBy: superAdminId,
-        updatedAt: new Date(),
-        deletedAt: null,
-        deletedBy: null,
-        isDeleted: false,
-      },
-    },
-    {
-      returnDocument: "after",
-      upsert: true,
-      setDefaultsOnInsert: true,
-      runValidators: true,
-    },
-  );
-
+  const dechet = new Dechet({
+    ...seedDechetConfig,
+    createdBy: superAdminId,
+    updatedBy: superAdminId,
+    deletedAt: null,
+    deletedBy: null,
+    isDeleted: false,
+  });
+  
+  await dechet.save();
   return dechet;
 };
 
 const upsertStation = async (dechetId, superAdminId) => {
-  const station = await Station.findOneAndUpdate(
-    {
-      nom: seedStationConfig.nom,
-      ville: seedStationConfig.ville,
-    },
-    {
-      $set: {
-        ...seedStationConfig,
-        typesDechetsAcceptes: [dechetId],
-        createdBy: superAdminId,
-        updatedBy: superAdminId,
-        updatedAt: new Date(),
-        deletedAt: null,
-        deletedBy: null,
-        isDeleted: false,
-      },
-    },
-    {
-      returnDocument: "after",
-      upsert: true,
-      setDefaultsOnInsert: true,
-      runValidators: true,
-    },
-  );
-
+  const station = new Station({
+    ...seedStationConfig,
+    typesDechetsAcceptes: [dechetId],
+    createdBy: superAdminId,
+    updatedBy: superAdminId,
+    deletedAt: null,
+    deletedBy: null,
+    isDeleted: false,
+  });
+  
+  await station.save();
   return station;
 };
 
 const upsertCollecte = async ({ stationId, dechetId, agentId, superAdminId }) => {
-  const collecte = await Collecte.findOneAndUpdate(
-    { commentaire: seedCollecteConfig.commentaire },
-    {
-      $set: {
-        station: stationId,
-        dechet: dechetId,
-        agent: agentId,
-        quantite: seedCollecteConfig.quantite,
-        statut: seedCollecteConfig.statut,
-        createdBy: superAdminId,
-        updatedBy: superAdminId,
-        updatedAt: new Date(),
-        deletedAt: null,
-        deletedBy: null,
-        isDeleted: false,
-      },
-      $setOnInsert: {
-        commentaire: seedCollecteConfig.commentaire,
-        dateCollecte: new Date(),
-        createdAt: new Date(),
-      },
-    },
-    {
-      returnDocument: "after",
-      upsert: true,
-      setDefaultsOnInsert: true,
-      runValidators: true,
-    },
-  );
-
+  const collecte = new Collecte({
+    station: stationId,
+    dechet: dechetId,
+    agent: agentId,
+    quantite: seedCollecteConfig.quantite,
+    statut: seedCollecteConfig.statut,
+    commentaire: seedCollecteConfig.commentaire,
+    dateCollecte: new Date(),
+    createdBy: superAdminId,
+    updatedBy: superAdminId,
+    deletedAt: null,
+    deletedBy: null,
+    isDeleted: false,
+  });
+  
+  await collecte.save();
   return collecte;
 };
 
@@ -217,6 +161,18 @@ const buildRapport = async ({ stationId, creatorId, collecte }) => {
 };
 
 const bootstrapInitialData = async () => {
+  // Check if this is the first launch by looking for ANY user
+  const existingUserCount = await User.countDocuments();
+  
+  if (existingUserCount > 0) {
+    // Database already has data - DO NOT seed
+    logger.info('Database already contains data, skipping bootstrap seed');
+    return null;
+  }
+
+  // First launch - seed initial data
+  logger.info('First launch detected - creating bootstrap seed data');
+  
   const superAdmin = await upsertUser(seedUsersConfig.superAdmin, null);
   const admin = await upsertUser(seedUsersConfig.admin, superAdmin._id);
   const agent = await upsertUser(seedUsersConfig.agent, superAdmin._id);
@@ -236,7 +192,7 @@ const bootstrapInitialData = async () => {
   });
 
   logger.info({
-    message: "Bootstrap initial data synchronized",
+    message: "Bootstrap initial data created successfully",
     users: Object.values(seedUsersConfig).map((user) => ({
       email: user.email,
       role: user.role,

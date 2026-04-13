@@ -48,8 +48,13 @@ const getDefaultPeriod = () => {
   const dateDebut = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1, 0, 0, 0, 0),
   );
+  
+  // Set dateFin to end of today (23:59:59.999)
+  const dateFin = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999),
+  );
 
-  return { dateDebut, dateFin: now };
+  return { dateDebut, dateFin };
 };
 
 const getDashboardDefaultPeriod = () => {
@@ -57,8 +62,13 @@ const getDashboardDefaultPeriod = () => {
   const dateDebut = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1, 0, 0, 0, 0),
   );
+  
+  // Set dateFin to end of today (23:59:59.999)
+  const dateFin = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999),
+  );
 
-  return { dateDebut, dateFin: now };
+  return { dateDebut, dateFin };
 };
 
 const normalizePeriod = (period = null) => {
@@ -95,6 +105,7 @@ const normalizeDashboardPeriod = (period = null) => {
 
 const buildDateFilter = (period) => ({
   isDeleted: { $ne: true },
+  statut: "VALIDEE",
   dateCollecte: {
     $gte: period.dateDebut,
     $lte: period.dateFin,
@@ -188,8 +199,12 @@ const getPreviousEquivalentPeriod = (period) => {
 const getMonthToDatePeriod = () => {
   const now = new Date();
   const dateDebut = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  
+  // Set dateFin to end of today
+  const dateFin = new Date(now);
+  dateFin.setHours(23, 59, 59, 999);
 
-  return { dateDebut, dateFin: now };
+  return { dateDebut, dateFin };
 };
 
 const getWeekToDatePeriod = () => {
@@ -201,7 +216,11 @@ const getWeekToDatePeriod = () => {
   dateDebut.setDate(dateDebut.getDate() - diffToMonday);
   dateDebut.setHours(0, 0, 0, 0);
 
-  return { dateDebut, dateFin: now };
+  // Set dateFin to end of today
+  const dateFin = new Date(now);
+  dateFin.setHours(23, 59, 59, 999);
+
+  return { dateDebut, dateFin };
 };
 
 const computeVariation = (currentValue, previousValue) => {
@@ -214,40 +233,50 @@ const computeVariation = (currentValue, previousValue) => {
 
 const sanitizeId = (value) => (value ? value.toString() : null);
 
-const aggregateTypeTotals = async (period) =>
-  Collecte.aggregate([
+const aggregateTypeTotals = async (period) => {
+  const collectesCheck = await Collecte.find(buildDateFilter(period))
+    .select('dechet quantite')
+    .lean();
+  
+  const result = await Collecte.aggregate([
     { $match: buildDateFilter(period) },
     {
+      $lookup: {
+        from: "dechets",
+        localField: "dechet",
+        foreignField: "_id",
+        as: "dechetInfo",
+      },
+    },
+    { $unwind: { path: "$dechetInfo", preserveNullAndEmptyArrays: true } },
+    {
       $group: {
-        _id: "$dechet",
+        _id: "$dechetInfo.categorie",
+        dechetId: { $first: "$dechetInfo._id" },
+        nom: { $first: { $ifNull: ["$dechetInfo.categorie", "Inconnu"] } },
+        categorie: { $first: { $ifNull: ["$dechetInfo.categorie", "Inconnu"] } },
         quantiteKg: { $sum: "$quantite" },
         nombreCollectes: { $sum: 1 },
       },
     },
     {
-      $lookup: {
-        from: "dechets",
-        localField: "_id",
-        foreignField: "_id",
-        as: "dechetInfo",
-      },
-    },
-    { $unwind: "$dechetInfo" },
-    {
       $project: {
         _id: 0,
-        dechetId: "$dechetInfo._id",
-        nom: "$dechetInfo.nom",
-        categorie: "$dechetInfo.categorie",
+        dechetId: 1,
+        nom: 1,
+        categorie: 1,
         quantiteKg: 1,
         nombreCollectes: 1,
       },
     },
     { $sort: { quantiteKg: -1, nom: 1 } },
   ]);
+  
+  return result;
+};
 
-const aggregateMonthlyByType = async (period) =>
-  Collecte.aggregate([
+const aggregateMonthlyByType = async (period) => {
+  const result = await Collecte.aggregate([
     { $match: buildDateFilter(period) },
     {
       $group: {
@@ -268,28 +297,35 @@ const aggregateMonthlyByType = async (period) =>
         as: "dechetInfo",
       },
     },
-    { $unwind: "$dechetInfo" },
+    { $unwind: { path: "$dechetInfo", preserveNullAndEmptyArrays: true } },
     {
       $project: {
         _id: 0,
         year: "$_id.year",
         month: "$_id.month",
         dechetId: "$dechetInfo._id",
-        nom: "$dechetInfo.nom",
-        categorie: "$dechetInfo.categorie",
+        nom: { $ifNull: ["$dechetInfo.nom", "Inconnu"] },
+        categorie: { $ifNull: ["$dechetInfo.categorie", "Inconnu"] },
         quantiteKg: 1,
         nombreCollectes: 1,
       },
     },
     { $sort: { year: 1, month: 1, quantiteKg: -1 } },
   ]);
+  
+  return result;
+};
 
 const aggregateRecentCollectes = async (period, limit = 5) => {
-  const collectes = await Collecte.find(buildDateFilter(period))
+  // Get recent collectes from all time, not just the period
+  const collectes = await Collecte.find({
+    isDeleted: { $ne: true },
+    statut: "VALIDEE",
+  })
     .populate("station", "nom ville")
     .populate("dechet", "nom categorie")
     .populate("agent", "nom prenom")
-    .sort({ dateCollecte: -1 })
+    .sort({ dateCollecte: -1, createdAt: -1 })
     .limit(limit);
 
   return collectes.map((collecte) => ({
@@ -375,43 +411,13 @@ const aggregateCollections = async (period) => {
           as: "stationInfo",
         },
       },
-      { $unwind: "$stationInfo" },
+      { $unwind: { path: "$stationInfo", preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 0,
           stationId: "$stationInfo._id",
-          nom: "$stationInfo.nom",
-          ville: "$stationInfo.ville",
-          quantiteKg: 1,
-          nombreCollectes: 1,
-        },
-      },
-      { $sort: { quantiteKg: -1, nom: 1 } },
-    ]),
-    Collecte.aggregate([
-      { $match: dateFilter },
-      {
-        $group: {
-          _id: "$dechet",
-          quantiteKg: { $sum: "$quantite" },
-          nombreCollectes: { $sum: 1 },
-        },
-      },
-      {
-        $lookup: {
-          from: "dechets",
-          localField: "_id",
-          foreignField: "_id",
-          as: "dechetInfo",
-        },
-      },
-      { $unwind: "$dechetInfo" },
-      {
-        $project: {
-          _id: 0,
-          dechetId: "$dechetInfo._id",
-          nom: "$dechetInfo.nom",
-          categorie: "$dechetInfo.categorie",
+          nom: { $ifNull: ["$stationInfo.nom", "Station inconnue"] },
+          ville: { $ifNull: ["$stationInfo.ville", "N/A"] },
           quantiteKg: 1,
           nombreCollectes: 1,
         },
@@ -428,7 +434,40 @@ const aggregateCollections = async (period) => {
           as: "dechetInfo",
         },
       },
-      { $unwind: "$dechetInfo" },
+      { $unwind: { path: "$dechetInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$dechetInfo.categorie",
+          dechetId: { $first: "$dechetInfo._id" },
+          nom: { $first: { $ifNull: ["$dechetInfo.categorie", "Inconnu"] } },
+          categorie: { $first: { $ifNull: ["$dechetInfo.categorie", "Inconnu"] } },
+          quantiteKg: { $sum: "$quantite" },
+          nombreCollectes: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          dechetId: 1,
+          nom: 1,
+          categorie: 1,
+          quantiteKg: 1,
+          nombreCollectes: 1,
+        },
+      },
+      { $sort: { quantiteKg: -1, nom: 1 } },
+    ]),
+    Collecte.aggregate([
+      { $match: dateFilter },
+      {
+        $lookup: {
+          from: "dechets",
+          localField: "dechet",
+          foreignField: "_id",
+          as: "dechetInfo",
+        },
+      },
+      { $unwind: { path: "$dechetInfo", preserveNullAndEmptyArrays: true } },
       {
         $group: {
           _id: null,

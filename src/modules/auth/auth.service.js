@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const User = require("../users/user.model");
 const PasswordResetCode = require("./auth.model");
 const logger = require("../../common/utils/logger");
+const { sendPasswordResetCode } = require("../../common/utils/mail");
 
 const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET || "dev-access-secret";
 const REFRESH_TOKEN_SECRET =
@@ -254,6 +255,22 @@ const requestPasswordReset = async ({ email }) => {
       email: normalizedEmail,
       code: verificationCode,
     });
+  }
+
+  // Send email with verification code
+  try {
+    await sendPasswordResetCode({
+      email: normalizedEmail,
+      code: verificationCode,
+      ttlMinutes: PASSWORD_RESET_CODE_TTL_MINUTES,
+    });
+  } catch (emailError) {
+    logger.error({
+      message: "Failed to send password reset email",
+      email: normalizedEmail,
+      error: emailError.message,
+    });
+    // Don't fail the request if email fails, code is still valid
   }
 
   return {

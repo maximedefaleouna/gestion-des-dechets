@@ -27,12 +27,32 @@ Les donnees creees ou remises a jour sont :
 
 Quand un utilisateur est cree via l'API, son mot de passe initial est `123456` si aucun mot de passe n'est fourni dans la requete.
 
-Le module `auth` expose aussi:
+## Mot de passe oublie
 
-- `POST /api/v1/auth/change-password` pour changer le mot de passe du compte connecte
-- `POST /api/v1/auth/forgot-password/request` pour demander un code a 6 chiffres
-- `POST /api/v1/auth/forgot-password/verify` pour verifier le code
-- `POST /api/v1/auth/forgot-password/reset` pour definir le nouveau mot de passe
+Le module `auth` expose le flux complet de reinitialisation de mot de passe :
+
+1. `POST /api/v1/auth/forgot-password/request` - Demander un code a 6 chiffres (envoye par email)
+2. `POST /api/v1/auth/forgot-password/verify` - Verifier le code recu
+3. `POST /api/v1/auth/forgot-password/reset` - Definir le nouveau mot de passe
+
+### Configuration Email
+
+L'envoi d'email est configure avec Nodemailer (Gmail). Les variables d'environnement requises sont :
+
+```
+EMAIL_HOST_USER=defaleounamaxime@gmail.com
+EMAIL_HOST_PASSWORD=votre_app_password
+```
+
+**Important** : Pour Gmail, vous devez utiliser un "App Password" (mot de passe d'application) et non votre mot de passe habituel.
+
+### Fonctionnement
+
+- Quand un utilisateur demande une reinitialisation, un code a 6 chiffres est genere
+- Le code est envoye par email a l'utilisateur
+- Le code expire apres 15 minutes
+- Le code est aussi affiche dans les logs en environnement de developpement (NODE_ENV !== "production")
+- Si l'envoi d'email echoue, le code reste valide et est visible dans les logs
 
 Le bootstrap est idempotent :
 

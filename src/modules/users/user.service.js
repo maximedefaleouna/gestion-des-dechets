@@ -1,4 +1,5 @@
 const User = require("./user.model");
+const Collecte = require("../collectes/collecte.model");
 const { ROLES } = require("../../common/utils/autorize");
 
 const DEFAULT_USER_PASSWORD = "123456";
@@ -156,8 +157,25 @@ const getUsers = async (query) => {
     User.countDocuments(filters),
   ]);
 
+  // Get collection counts for all users
+  const userIds = users.map(user => user._id);
+  const collectionCounts = await Collecte.aggregate([
+    { $match: { agent: { $in: userIds } } },
+    { $group: { _id: "$agent", count: { $sum: 1 } } }
+  ]);
+
+  // Create a map of userId -> collectionCount
+  const countMap = {};
+  collectionCounts.forEach(item => {
+    countMap[item._id.toString()] = item.count;
+  });
+
   return {
-    data: users.map(sanitizeUser),
+    data: users.map(user => {
+      const sanitizedUser = sanitizeUser(user);
+      sanitizedUser.collectionsCount = countMap[user._id.toString()] || 0;
+      return sanitizedUser;
+    }),
     pagination: {
       page,
       limit,
