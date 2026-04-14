@@ -68,6 +68,31 @@ describe("rapport.controller", () => {
     expect(next).toHaveBeenCalledWith(error);
   });
 
+  it("returns dashboard with custom period", async () => {
+    const req = {
+      user: { id: "admin-1", role: "ADMIN" },
+      query: {
+        dateDebut: "2026-01-01",
+        dateFin: "2026-01-31",
+      },
+    };
+    const res = createRes();
+    const next = jest.fn();
+
+    mockRapportService.getRapportDashboard.mockResolvedValue({ cartes: {} });
+
+    await rapportController.getDashboard(req, res, next);
+
+    expect(mockRapportService.getRapportDashboard).toHaveBeenCalledWith(
+      { id: "admin-1", role: "ADMIN" },
+      {
+        dateDebut: "2026-01-01",
+        dateFin: "2026-01-31",
+      }
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
   it("forwards statistics errors", async () => {
     const req = { user: { id: "admin-1", role: "ADMIN" }, query: {} };
     const res = createRes();

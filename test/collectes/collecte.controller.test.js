@@ -235,4 +235,38 @@ describe("collecte.controller", () => {
 
     expect(next).toHaveBeenCalledWith(error);
   });
+
+  it("returns station stats with custom period", async () => {
+    const req = {
+      params: { stationId: "station-1" },
+      query: {
+        dateDebut: "2026-01-01",
+        dateFin: "2026-01-31",
+      },
+      user: { id: "admin-1" },
+    };
+    const res = createRes();
+    const next = jest.fn();
+
+    mockCollecteService.getStatsByStation.mockResolvedValue({
+      station: { id: "station-1" },
+      resume: { totalCollectes: 5, quantiteTotale: 500 },
+    });
+
+    await collecteController.getStatsByStation(req, res, next);
+
+    expect(mockCollecteService.getStatsByStation).toHaveBeenCalledWith(
+      "station-1",
+      { id: "admin-1" },
+      {
+        dateDebut: "2026-01-01",
+        dateFin: "2026-01-31",
+      }
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Statistiques de la station",
+      data: { station: { id: "station-1" }, resume: { totalCollectes: 5, quantiteTotale: 500 } },
+    });
+  });
 });

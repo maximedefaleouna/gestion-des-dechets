@@ -57,7 +57,6 @@ const authenticateToken = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("Authentication error:", error);
     next(
       error.statusCode
         ? error

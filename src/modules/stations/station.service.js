@@ -89,4 +89,14 @@ const deleteById = async (id, currentUser = null) => {
   return station;
 };
 
-module.exports = { create, getAll, getById, updateById, deleteById };
+module.exports = { 
+  create, 
+  getAll, 
+  getById, 
+  updateById, 
+  deleteById,
+  // Export for testing
+  getAuditFields,
+  getUpdateAuditFields,
+  getDeleteAuditFields,
+};

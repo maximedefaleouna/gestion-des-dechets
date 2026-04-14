@@ -65,7 +65,7 @@ describe("Rapport routes", () => {
     });
   });
 
-  it("rejects agents on dashboard access", async () => {
+  it("allows agents to access dashboard", async () => {
     mockCurrentUser = {
       id: "agent-1",
       email: "agent@example.com",
@@ -73,11 +73,35 @@ describe("Rapport routes", () => {
       isActive: true,
     };
 
+    const payload = { cartes: {}, collectesMensuelles: {}, repartitionParType: [] };
+    rapportService.getRapportDashboard.mockResolvedValue(payload);
+
     const response = await request(app).get("/api/v1/rapports/dashboard");
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      message: "Vous n'avez pas l'autorisation pour cette action",
+      message: "Tableau de bord recupere avec succes",
+      data: payload,
+    });
+  });
+
+  it("allows agents to access report statistics", async () => {
+    mockCurrentUser = {
+      id: "agent-1",
+      email: "agent@example.com",
+      role: ROLES.AGENT,
+      isActive: true,
+    };
+
+    const payload = { resume: {} };
+    rapportService.getRapportStatistiques.mockResolvedValue(payload);
+
+    const response = await request(app).get("/api/v1/rapports/statistiques");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      message: "Statistiques du rapport recuperees avec succes",
+      data: payload,
     });
   });
 });

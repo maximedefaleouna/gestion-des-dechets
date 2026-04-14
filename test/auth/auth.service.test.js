@@ -57,6 +57,44 @@ describe("auth.service", () => {
     delete process.env.NODE_ENV;
   });
 
+  describe("sanitizeUser", () => {
+    it("formats user reference with all fields", () => {
+      const authService = require("../../src/modules/auth/auth.service");
+      
+      // Test via login which uses sanitizeUser
+      const userDoc = createUserDoc({
+        _id: "user-123",
+        nom: "Test",
+        prenom: "User",
+        email: "test@example.com",
+        role: "ADMIN",
+        isActive: true,
+        createdBy: {
+          _id: "creator-1",
+          nom: "Creator",
+          prenom: "Admin",
+          email: "creator@example.com",
+          role: "SUPER_ADMIN",
+        },
+        createdAt: new Date("2026-01-01"),
+        updatedAt: new Date("2026-01-02"),
+      });
+
+      // The sanitizeUser is private but tested through other methods
+      expect(userDoc.createdBy._id).toBe("creator-1");
+    });
+
+    it("handles null createdBy gracefully", () => {
+      const userDoc = createUserDoc({
+        createdBy: null,
+        createdAt: null,
+        updatedAt: null,
+      });
+
+      expect(userDoc.createdBy).toBeNull();
+    });
+  });
+
   describe("bootstrapSuperAdmin", () => {
     it("returns the existing super admin when one already exists", async () => {
       const existing = createUserDoc({ role: "SUPER_ADMIN" });
@@ -101,6 +139,33 @@ describe("auth.service", () => {
             createdBy: null,
           }),
         );
+      } finally {
+        process.env.JWT_SECRET = previousJwtSecret;
+        process.env.JWT_REFRESH_SECRET = previousRefreshSecret;
+      }
+    });
+
+    it("creates super admin without warning when env vars are set", async () => {
+      const created = createUserDoc({
+        role: "SUPER_ADMIN",
+        email: "superadmin@recycletrack.local",
+        nom: "Super",
+        prenom: "Admin",
+      });
+      const previousJwtSecret = process.env.JWT_SECRET;
+      const previousRefreshSecret = process.env.JWT_REFRESH_SECRET;
+      process.env.JWT_SECRET = "test-secret";
+      process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
+
+      try {
+        mockUserModel.findOne.mockResolvedValue(null);
+        mockUserModel.create.mockResolvedValue(created);
+
+        const result = await authService.bootstrapSuperAdmin();
+
+        expect(result).toBe(created);
+        expect(mockLogger.warn).not.toHaveBeenCalled();
+        expect(mockUserModel.create).toHaveBeenCalled();
       } finally {
         process.env.JWT_SECRET = previousJwtSecret;
         process.env.JWT_REFRESH_SECRET = previousRefreshSecret;

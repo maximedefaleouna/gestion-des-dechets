@@ -101,4 +101,8 @@ module.exports = {
   getDechetById,
   updateDechet,
   deleteDechet,
+  // Export for testing
+  getAuditFields,
+  getUpdateAuditFields,
+  getDeleteAuditFields,
 };

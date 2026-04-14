@@ -8,6 +8,10 @@ const mockUserModel = {
 
 jest.mock("../../src/modules/users/user.model", () => mockUserModel);
 
+jest.mock("../../src/modules/collectes/collecte.model", () => ({
+  aggregate: jest.fn().mockResolvedValue([]),
+}));
+
 const { ROLES } = require("../../src/common/utils/autorize");
 const userService = require("../../src/modules/users/user.service");
 

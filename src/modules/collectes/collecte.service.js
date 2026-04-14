@@ -506,4 +506,8 @@ module.exports = {
   getGlobalStats,
   getStatsByStation,
   updateCollecte,
+  // Export utility functions for testing
+  getReferenceId,
+  getAuditFields,
+  getUpdateAuditFields,
 };
