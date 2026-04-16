@@ -1,0 +1,1144 @@
+{
+	"info": {
+		"_postman_id": "recycletrack-api-collection",
+		"name": "RecycleTrack API",
+		"description": "Collection complète pour tester l'API RecycleTrack - Gestion des stations de recyclage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "stationId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "dechetId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "collecteId",
+			"value": "",
+			"type": "string"
+		}
+	],
+
+	"item": [
+		{
+			"name": "01 - Authentification",
+			"item": [
+				{
+					"name": "Se connecter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data) {",
+									"        pm.collectionVariables.set('accessToken', response.data.accessToken);",
+									"        pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+									"        console.log('Tokens saved to collection variables');",
+									"    }",
+									"}",
+									"",
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has accessToken', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.data).to.have.property('accessToken');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"superadmin@recycletrack.local\",\n    \"password\": \"SuperAdmin123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Se connecter et obtenir les tokens JWT"
+					},
+					"response": []
+				},
+				{
+					"name": "Rafraîchir le token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh-token",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "refresh-token"]
+						},
+						"description": "Rafraîchir le token d'accès"
+					},
+					"response": []
+				},
+				{
+					"name": "Se déconnecter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "Se déconnecter et invalider les tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Changer le mot de passe",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currentPassword\": \"SuperAdmin123!\",\n    \"newPassword\": \"NewPassword123!\",\n    \"confirmNewPassword\": \"NewPassword123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "change-password"]
+						},
+						"description": "Changer le mot de passe du compte connecté"
+					},
+					"response": []
+				},
+				{
+					"name": "Mot de passe oublié - Demander code",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@recycletrack.local\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/forgot-password/request",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "forgot-password", "request"]
+						},
+						"description": "Demander un code de réinitialisation de mot de passe (envoyé par email)"
+					},
+					"response": []
+				},
+				{
+					"name": "Mot de passe oublié - Vérifier code",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@recycletrack.local\",\n    \"code\": \"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/forgot-password/verify",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "forgot-password", "verify"]
+						},
+						"description": "Vérifier le code de réinitialisation reçu par email"
+					},
+					"response": []
+				},
+				{
+					"name": "Mot de passe oublié - Réinitialiser",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@recycletrack.local\",\n    \"resetToken\": \"token-from-verify-response\",\n    \"newPassword\": \"NewPassword123!\",\n    \"confirmNewPassword\": \"NewPassword123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/forgot-password/reset",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "forgot-password", "reset"]
+						},
+						"description": "Définir un nouveau mot de passe après vérification du code"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints d'authentification et gestion de compte"
+		},
+		{
+			"name": "02 - Utilisateurs",
+			"item": [
+				{
+					"name": "Obtenir utilisateur connecté (Me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "me"]
+						},
+						"description": "Obtenir les informations de l'utilisateur connecté"
+					},
+					"response": []
+				},
+				{
+					"name": "Mettre à jour utilisateur connecté (Me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"NouveauNom\",\n    \"prenom\": \"NouveauPrenom\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "me"]
+						},
+						"description": "Mettre à jour les informations de l'utilisateur connecté"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir tous les utilisateurs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "Obtenir tous les utilisateurs (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Créer utilisateur",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.id) {",
+									"        pm.collectionVariables.set('userId', response.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"Doe\",\n    \"prenom\": \"John\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"AGENT\",\n    \"password\": \"Agent123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "Créer un nouvel utilisateur (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir utilisateur par ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{userId}}"]
+						},
+						"description": "Obtenir un utilisateur par son ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Mettre à jour utilisateur",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"DoeUpdated\",\n    \"isActive\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{userId}}"]
+						},
+						"description": "Mettre à jour un utilisateur"
+					},
+					"response": []
+				},
+				{
+					"name": "Supprimer utilisateur",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{userId}}"]
+						},
+						"description": "Supprimer un utilisateur (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				}
+			],
+			"description": "Gestion des utilisateurs"
+		},
+		{
+			"name": "03 - Stations",
+			"item": [
+				{
+					"name": "Obtenir toutes les stations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.length > 0) {",
+									"        pm.collectionVariables.set('stationId', response.data[0]._id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stations",
+							"host": ["{{baseUrl}}"],
+							"path": ["stations"]
+						},
+						"description": "Obtenir toutes les stations"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir station par ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stations/{{stationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["stations", "{{stationId}}"]
+						},
+						"description": "Obtenir une station par son ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Créer station",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"Station Test\",\n    \"adresse\": \"123 Rue du Recyclage\",\n    \"ville\": \"Lomé\",\n    \"capaciteMax\": 1000,\n    \"typesDechetsAcceptes\": [\"Plastique\", \"Verre\", \"Papier\"],\n    \"localisation\": {\n        \"latitude\": 6.1254,\n        \"longitude\": 1.2254\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/stations",
+							"host": ["{{baseUrl}}"],
+							"path": ["stations"]
+						},
+						"description": "Créer une nouvelle station (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Mettre à jour station",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"Station Test Updated\",\n    \"capaciteActuelle\": 500,\n    \"statut\": \"ACTIVE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/stations/{{stationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["stations", "{{stationId}}"]
+						},
+						"description": "Mettre à jour une station (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Supprimer station",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stations/{{stationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["stations", "{{stationId}}"]
+						},
+						"description": "Supprimer une station (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				}
+			],
+			"description": "Gestion des stations de recyclage"
+		},
+		{
+			"name": "04 - Types de déchets",
+			"item": [
+				{
+					"name": "Obtenir tous les types de déchets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.length > 0) {",
+									"        pm.collectionVariables.set('dechetId', response.data[0]._id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/dechets",
+							"host": ["{{baseUrl}}"],
+							"path": ["dechets"]
+						},
+						"description": "Obtenir tous les types de déchets"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir type de déchet par ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/dechets/{{dechetId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["dechets", "{{dechetId}}"]
+						},
+						"description": "Obtenir un type de déchet par son ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Créer type de déchet",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"Plastique PET\",\n    \"categorie\": \"Recyclable\",\n    \"description\": \"Bouteilles et contenants en plastique PET\",\n    \"uniteMesure\": \"kg\",\n    \"dangereux\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/dechets",
+							"host": ["{{baseUrl}}"],
+							"path": ["dechets"]
+						},
+						"description": "Créer un nouveau type de déchet (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Mettre à jour type de déchet",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"Plastique PET Updated\",\n    \"description\": \"Description mise à jour\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/dechets/{{dechetId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["dechets", "{{dechetId}}"]
+						},
+						"description": "Mettre à jour un type de déchet (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Supprimer type de déchet",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/dechets/{{dechetId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["dechets", "{{dechetId}}"]
+						},
+						"description": "Supprimer un type de déchet (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				}
+			],
+			"description": "Gestion des types de déchets"
+		},
+		{
+			"name": "05 - Collectes",
+			"item": [
+				{
+					"name": "Obtenir toutes les collectes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.length > 0) {",
+									"        pm.collectionVariables.set('collecteId', response.data[0].id || response.data[0]._id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/collectes?limit=100&sortBy=dateCollecte&order=desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "sortBy",
+									"value": "dateCollecte"
+								},
+								{
+									"key": "order",
+									"value": "desc"
+								}
+							]
+						},
+						"description": "Obtenir toutes les collectes"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir collecte par ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/collectes/{{collecteId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes", "{{collecteId}}"]
+						},
+						"description": "Obtenir une collecte par son ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Créer collecte",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"station\": \"{{stationId}}\",\n    \"dechet\": \"{{dechetId}}\",\n    \"quantite\": 150,\n    \"dateCollecte\": \"2026-04-13T10:00:00.000Z\",\n    \"statut\": \"VALIDEE\",\n    \"commentaire\": \"Collecte de test\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/collectes",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes"]
+						},
+						"description": "Créer une nouvelle collecte"
+					},
+					"response": []
+				},
+				{
+					"name": "Mettre à jour collecte",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantite\": 200,\n    \"statut\": \"VALIDEE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/collectes/{{collecteId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes", "{{collecteId}}"]
+						},
+						"description": "Mettre à jour une collecte (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Supprimer collecte",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/collectes/{{collecteId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes", "{{collecteId}}"]
+						},
+						"description": "Supprimer une collecte (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir statistiques globales",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/collectes/stats/global",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes", "stats", "global"]
+						},
+						"description": "Obtenir les statistiques globales des collectes (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir statistiques par station",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/collectes/stats/station/{{stationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["collectes", "stats", "station", "{{stationId}}"]
+						},
+						"description": "Obtenir les statistiques par station (ADMIN/SUPER_ADMIN uniquement)"
+					},
+					"response": []
+				}
+			],
+			"description": "Gestion des collectes de déchets"
+		},
+		{
+			"name": "06 - Rapports et Tableau de bord",
+			"item": [
+				{
+					"name": "Obtenir tableau de bord",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rapports/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["rapports", "dashboard"]
+						},
+						"description": "Obtenir les données du tableau de bord"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir statistiques",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rapports/statistiques",
+							"host": ["{{baseUrl}}"],
+							"path": ["rapports", "statistiques"]
+						},
+						"description": "Obtenir les statistiques et rapports"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir tableau de bord (période personnalisée)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rapports/dashboard?dateDebut=2026-01-01&dateFin=2026-04-13",
+							"host": ["{{baseUrl}}"],
+							"path": ["rapports", "dashboard"],
+							"query": [
+								{
+									"key": "dateDebut",
+									"value": "2026-01-01"
+								},
+								{
+									"key": "dateFin",
+									"value": "2026-04-13"
+								}
+							]
+						},
+						"description": "Obtenir le dashboard avec une période personnalisée"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtenir statistiques (période personnalisée)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/rapports/statistiques?dateDebut=2026-01-01&dateFin=2026-04-13",
+							"host": ["{{baseUrl}}"],
+							"path": ["rapports", "statistiques"],
+							"query": [
+								{
+									"key": "dateDebut",
+									"value": "2026-01-01"
+								},
+								{
+									"key": "dateFin",
+									"value": "2026-04-13"
+								}
+							]
+						},
+						"description": "Obtenir les statistiques avec une période personnalisée"
+					},
+					"response": []
+				}
+			],
+			"description": "Tableau de bord et rapports statistiques"
+		}
+	]
+}
